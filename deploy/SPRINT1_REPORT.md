@@ -1,0 +1,119 @@
+# Sprint 1 yerel doğrulama raporu
+
+- Branch: `feature/mvp-foundation`. Commit ve push yapılmadı.
+- Laravel 13.36.0, PHP 8.5.11, Livewire 4.4.7; PostgreSQL 16 ve Redis 7.
+- `docker compose up -d --build` başarıyla çalıştırıldı.
+- PHP-FPM, Nginx, PostgreSQL ve Redis: `healthy`. `assets`: başarılı tek seferlik derleme, `Exited (0)`.
+- `http://localhost:8088/login` ve `/up`: HTTP 200.
+- Migration’lar PostgreSQL üzerinde uygulandı; migration durum kontrolü başarılı.
+- PHPUnit: **16 başarılı test, 104 doğrulama, 0 başarısız test**. Test veritabanı SQLite bellektir.
+- İlk test çalıştırmasındaki pivot tablo eşlemesi ve Docker/test ortamı ayrımı hataları giderildi. Üyelik iptali testinin Livewire snapshot akışı düzeltildi.
+- Chrome tarayıcı kontrolü: giriş, workspace oluşturma, proje/rakip ekleme, DEMO analiz geçmişi, SEO/GEO, API ekranı ve çıkış başarılı. 390 px mobil görünümde yatay taşma yok; açılır menü kontrol edildi. JavaScript hatası görülmedi.
+- Geçici tarayıcı test hesabı ve workspace’i temizlendi. İlk gerçek kullanıcı için `docker compose exec app php artisan rankviora:user` kullanılmalı.
+- Composer platform gereksinimleri ve kilit dosyasından kurulum kontrolü başarılı. npm denetimi: 0 güvenlik açığı. PHP kodu Pint ile formatlandı.
+- README ve .gitignore başlangıç içeriği korundu ve genişletildi. Gizli dosyaların ve bağımlılık/derleme çıktılarının Git tarafından yok sayıldığı doğrulandı.
+- PostgreSQL ve Redis host portları kapalıdır. Nginx `127.0.0.1:8088` üzerinde yayın yapar. Yerel Compose yalnızca kendi ağıyla çalışır; `n8n_default` yalnızca production taslağındadır.
+- GitHub Actions hazırlandı, GitHub üzerinde henüz çalıştırılmadı.
+- VPS erişimi, production değişikliği, deployment ve ücretli API çağrısı yapılmadı.
+
+## Kalan işler
+
+Gerçek SEO/GEO API entegrasyonu, zamanlanmış analiz/worker, e-posta davetleri, parola sıfırlama ve billing sonraki sprintlerdedir. Production override taslağı; TLS, immutable image, yedekleme/geri yükleme ve deploy/rollback incelemesi tamamlanmadan production için hazır değildir.
+
+## Değiştirilen ve eklenen dosyalar
+
+- .dockerignore
+- .gitattributes
+- .github/workflows/tests.yml
+- .gitignore
+- AGENTS.md
+- app/.editorconfig
+- app/.env.example
+- app/.gitattributes
+- app/.gitignore
+- app/.npmrc
+- app/AGENTS.md
+- app/app/Console/Commands/CreateUser.php
+- app/app/Http/Controllers/AuthController.php
+- app/app/Http/Controllers/Controller.php
+- app/app/Http/Controllers/WorkspaceController.php
+- app/app/Livewire/ProjectManager.php
+- app/app/Models/AnalysisRun.php
+- app/app/Models/ApiUsageLog.php
+- app/app/Models/Competitor.php
+- app/app/Models/Project.php
+- app/app/Models/User.php
+- app/app/Models/Workspace.php
+- app/app/Models/WorkspaceUser.php
+- app/app/Policies/WorkspacePolicy.php
+- app/app/Providers/AppServiceProvider.php
+- app/artisan
+- app/boost.json
+- app/bootstrap/app.php
+- app/bootstrap/cache/.gitignore
+- app/bootstrap/providers.php
+- app/CLAUDE.md
+- app/composer.json
+- app/composer.lock
+- app/config/app.php
+- app/config/auth.php
+- app/config/cache.php
+- app/config/database.php
+- app/config/filesystems.php
+- app/config/logging.php
+- app/config/mail.php
+- app/config/queue.php
+- app/config/services.php
+- app/config/session.php
+- app/database/.gitignore
+- app/database/factories/UserFactory.php
+- app/database/migrations/0001_01_01_000000_create_users_table.php
+- app/database/migrations/0001_01_01_000001_create_cache_table.php
+- app/database/migrations/0001_01_01_000002_create_jobs_table.php
+- app/database/migrations/2026_10_14_000001_create_workspace_tables.php
+- app/database/seeders/DatabaseSeeder.php
+- app/lang/tr/validation.php
+- app/package.json
+- app/package-lock.json
+- app/phpunit.xml
+- app/public/.htaccess
+- app/public/favicon.ico
+- app/public/index.php
+- app/public/robots.txt
+- app/README.md
+- app/resources/css/app.css
+- app/resources/js/app.js
+- app/resources/views/auth/login.blade.php
+- app/resources/views/layouts/app.blade.php
+- app/resources/views/livewire/project-manager.blade.php
+- app/resources/views/welcome.blade.php
+- app/resources/views/workspaces/index.blade.php
+- app/resources/views/workspaces/show.blade.php
+- app/routes/console.php
+- app/routes/web.php
+- app/storage/app/.gitignore
+- app/storage/app/private/.gitignore
+- app/storage/app/public/.gitignore
+- app/storage/framework/.gitignore
+- app/storage/framework/cache/.gitignore
+- app/storage/framework/cache/data/.gitignore
+- app/storage/framework/cache/locks/.gitignore
+- app/storage/framework/sessions/.gitignore
+- app/storage/framework/testing/.gitignore
+- app/storage/framework/views/.gitignore
+- app/storage/logs/.gitignore
+- app/tests/Feature/ExampleTest.php
+- app/tests/Feature/FoundationTest.php
+- app/tests/Feature/UserSetupTest.php
+- app/tests/TestCase.php
+- app/tests/Unit/ExampleTest.php
+- app/vite.config.js
+- compose.production.yml
+- compose.yml
+- deploy/setup.ps1
+- deploy/setup.sh
+- deploy/SPRINT1_REPORT.md
+- docker/nginx/default.conf
+- docker/php/Dockerfile
+- docker/php/entrypoint.sh
+- README.md
