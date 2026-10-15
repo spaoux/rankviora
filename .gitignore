@@ -25,6 +25,16 @@ Homestead.json
 
 /public/build
 /storage/pail
+/app/vendor/
+/app/node_modules/
+/app/public/build/
+!/app/storage/
+/app/storage/*.key
+/app/storage/logs/*
+!/app/storage/logs/.gitignore
+/app/.phpunit.cache/
+.env.*
+!.env.example
 .env.backup
 .env.production
 .phpactor.json

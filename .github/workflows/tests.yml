@@ -1,0 +1,29 @@
+name: Foundation checks
+on:
+  push:
+    branches: [feature/mvp-foundation]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate local environment
+        run: sh deploy/setup.sh
+      - name: Build and start services
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Verify dependencies
+        run: docker compose exec -T app composer check-platform-reqs
+      - name: Test tenant isolation and application
+        run: docker compose exec -T app php artisan test --compact
+      - name: Verify HTTP and migrations
+        run: |
+          curl --fail http://localhost:8088/login
+          curl --fail http://localhost:8088/up
+          docker compose exec -T app php artisan migrate:status
+      - name: Service logs on failure
+        if: failure()
+        run: docker compose logs --tail=100
