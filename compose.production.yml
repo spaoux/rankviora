@@ -9,6 +9,11 @@ services:
     networks:
       - default
       - n8n_default
+  worker:
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL:?Production URL required}
 networks:
   n8n_default:
     external: true

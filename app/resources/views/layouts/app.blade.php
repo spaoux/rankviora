@@ -20,12 +20,13 @@
         <nav class="mt-3 space-y-1" aria-label="Ana menü">
             <a class="nav-item" href="{{ route('home') }}">▦ Workspace’ler</a>
             @isset($workspace)
+            <a class="nav-item {{ ($section ?? '') === 'engine' ? 'nav-active' : '' }}" href="{{ route('seo.index', $workspace) }}">SEO Veri Motoru</a>
             @foreach(['seo'=>'SEO Dashboard','geo'=>'GEO Dashboard','projects'=>'Projeler ve rakipler','history'=>'Analiz geçmişi','usage'=>'API kullanımı','team'=>'Workspace ve ekip'] as $key=>$label)
                 <a class="nav-item {{ ($section ?? '') === $key ? 'nav-active' : '' }}" href="{{ route('workspace.show', [$workspace, $key]) }}">{{ $label }}</a>
             @endforeach
             @endisset
         </nav>
-        <div class="mt-8 lg:mt-auto rounded-xl bg-slate-900 p-4 text-xs leading-6"><span class="text-teal-400 font-semibold">SPRINT 1</span><br>Ücretli API bağlantıları kapalı.<br>Örnek metrikler DEMO’dur.</div>
+        <div class="mt-8 lg:mt-auto rounded-xl bg-slate-900 p-4 text-xs leading-6"><span class="text-teal-400 font-semibold">SPRINT 2 · SEO</span><br>DataForSEO: {{ strtoupper(config('seo.mode')) }}<br>Örnek metrikler MOCK/DEMO’dur.</div>
         <form method="POST" action="{{ route('logout') }}" class="mt-4">@csrf<button class="text-sm text-slate-400 hover:text-white">Güvenli çıkış →</button></form>
         </div>
     </aside>

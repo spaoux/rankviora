@@ -24,4 +24,9 @@ class Project extends Model
     {
         return $this->hasMany(AnalysisRun::class);
     }
+
+    public function seoSnapshots(): HasMany
+    {
+        return $this->hasMany(SeoSnapshot::class);
+    }
 }

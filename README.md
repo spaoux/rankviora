@@ -1,6 +1,59 @@
 # rankviora
 RankViora — SEO &amp; GEO Intelligence SaaS Platform
 
+## Sprint 2 — SEO Data Engine
+
+Aktif geliştirme branch’i `feature/seo-data-engine`. Sprint 1 giriş, workspace, proje/rakip ve GEO işlevleri korunur. **SEO Veri Motoru** menüsünden proje seçin; rakip seçerek **MOCK analizi başlat** düğmesini kullanın. Redis `seo` kuyruğundaki worker snapshot hazırlar. Sayfayı yenileyerek Domain Overview, Organic Keywords, Keyword Gap ve snapshot geçmişini açın. API kullanımında maliyet ve rezervasyon durumları görünür.
+
+```bash
+docker compose up -d --build
+docker compose exec app php artisan migrate:status
+docker compose exec app php artisan test
+docker compose logs --tail=50 worker
+```
+
+Yeni worker servisi Compose ile otomatik başlar. PHP kodu veya environment değiştiğinde `docker compose restart worker` ile uzun yaşayan worker’ın kodunu yenileyin. Worker 600 saniyelik timeout kullanır; Redis `retry_after=660` saniyedir. Kuyruk yükü nedeniyle ertelenen işler sınırlı sayıda tekrar denenir; sonucu belirsiz ücretli POST işlemi tekrarlanmaz. Snapshot state geçişi DB satır kilidiyle yapılır, aynı iş tekrar teslim edilirse bitmiş/işlenen snapshot yeniden çağrı üretmez.
+
+### Yerel port
+
+Varsayılan **http://localhost:8088** korunur. 15.10.2026 yerel doğrulamasında Windows’un 8070–8169 port aralığını ayırdığı görüldü; bu makinenin Git’e eklenmeyen kök `.env` dosyasında `RANKVIORA_PORT=18088` ve `APP_URL=http://localhost:18088` kullanıldı. **Bu ortamın güncel adresi http://localhost:18088**. Varsayılan port Windows’ta kullanılabiliyorsa bu iki yerel override kaldırılabilir. Sistem port rezervasyonlarını değiştirmek gerekmez. CI normal 8088 portunu kullanır.
+
+### SEO verilerinin kapsamı
+
+- Ülke Türkiye (`2792`), dil Türkçe (`tr`); Google organik sonuçları. Domain Overview, Ranked Keywords, Relevant Pages ve Domain Intersection için resmî sözleşmelere göre request/response DTO’ları vardır.
+- Trafik sağlayıcının **tahmini ETV** değeridir; gerçek ziyaretçi sayısı veya GSC/Analytics ölçümü değildir. İlk 3/10/100 dağılımı kümülatiftir. Bilinmeyen hacim/CPC null tutulur ve “—” gösterilir.
+- Veri alınma zamanı, snapshot tamamlanma zamanından ayrıdır; cache okunduğunda orijinal alınma tarihi korunur. Kelime hacminin sağlayıcı güncelleme tarihi ayrıca saklanır. Sağlayıcının vermediği ölçüm tarihi uydurulmaz.
+- Her endpoint’ten ilk en fazla **1000 satırlık pencere** alınır. UI toplam/saklanan satır sayısını ve kesilmiş kapsamı gösterir. Filtre, sıralama, sayfalama ve CSV bu saklanmış snapshot üzerinde çalışır; tüm provider veri kümesini indirmez ve yeni ücretli sorgu oluşturmaz. Otomatik tam provider pagination bu sprintte yoktur.
+- Eksik kelimeler `target1=rakip`, `target2=proje`, `intersections=false` yanıtından gelir. Ortak kelimelerde `rank_group` karşılaştırılır; küçük pozisyon daha iyidir. İlk 1000 satırlık yerel listeyi birbirinden çıkararak “bizde yok” kararı verilmez.
+- CSV filtreleri korur, en fazla 10000 satır çıkarır, MOCK kaynağını belirtir; `=`, `+`, `-`, `@`, baştaki kontrol karakterleri/BOM ile başlayan formül girişimleri apostrofla etkisizleştirilir. URL’ler veri olarak gösterilir; target domain’e HTTP isteği yapılmaz.
+- Snapshot → proje → workspace ilişkisi üzerinden erişim kontrol edilir. Sadece sahip analiz başlatabilir; üyeler sonuçları/export’u okuyabilir. Worker güncel sahipliği ve bekleyen işin domain/rakip durumunu tekrar doğrular. Eski snapshot’lar yeni analizle değiştirilmez.
+
+### Maliyet ve güvenli mock
+
+`app/config/seo.php` varsayılanı **mock**’tur. Runtime mock transport `Http::fake` ile resmî yanıt şekillerinde örnek döner; eşleşmeyen ağ istekleri engellenir. Anahtar gerekmez. MOCK veriler gerçek domain performansı olarak gösterilmez. `app/.env.example` sadece boş credential alanları içerir; gerçek değerler Git’e girmez.
+
+Varsayılan bütçe **workspace başına / UTC ayı başına $10**’dır. MOCK ve canlı defterler ayrıdır. Raporlanan mock bedel simülasyon bütçesine işlenir, `api_usage_logs.cost` gerçek bedeli **0** tutar. Bir provider denemesi öncesi varsayılan **$0.10** üst sınır rezerve edilir; bu tutar fiyat garantisi değildir ve canlı onaydan önce güncel tarife doğrulanmalıdır. Hesap genelindeki sağlayıcı harcama limiti ayrıca DataForSEO panelinden ayarlanmalıdır.
+
+Transaction + workspace row lock rezervasyon/harcama yarışlarını engeller. Cache anahtarı workspace, proje, mod, endpoint, domain, ülke/dil ve pagination içerir; Redis distributed lock tekrarlı sorguyu birleştirir. Başarılı deneme DB’de süreli receipt bırakır; Redis cache kaybolursa geçerli receipt yeniden ücretlendirmeyi önler. Cache ömrü 24 saattir. Süresi bitince yeni analiz tekrar provider isteği oluşturabilir.
+
+Maliyetler integer micro-USD ile hesaplanır. Üst/envelope ve task maliyeti/durumları doğrulanır. Yalnızca doğrulanmış **sıfır maliyetli** provider rate-limit yanıtı en fazla iki ek denemeyle exponential backoff kullanır. Timeout, HTTP 5xx veya bozuk/belirsiz yanıt tekrar edilmez; rezervasyon tutulur, maliyet “Bilinmiyor” gösterilir ve workspace aynı moddaki yeni ücretli sorgular için inceleme bekler. Worker çökmesiyle kalan `pending` kayıt da bloke eder; ay değişimi bu kaydı silmez.
+
+Belirsiz bir kaydı yalnızca sağlayıcı hesap/fatura/task kaydıyla gerçek tutarı doğruladıktan sonra, sunucu terminalindeki güvenilir operatör şu komutla uzlaştırabilir:
+
+```bash
+docker compose exec app php artisan rankviora:seo-reconcile RECEIPT_ID
+```
+
+Komut gerçek tutarı ve referans notunu sorar, açık doğrulama ister, rezervasyonu uzlaştırır ve denetim notunu saklar. API çağırmaz. Tutarı bilinmeyen isteği sıfır varsayarak uzlaştırmayın. Bir kayıt ikinci kez uzlaştırılamaz. Bütçeyi aşan doğrulanmış harcama yeni sorguları engellemeye devam eder.
+
+### Ayrı onay gerektiren canlı test planı
+
+Gerçek bağlantı bu sprintte **etkinleştirilmedi**. Canlı moda geçiş için `DATAFORSEO_MODE=live`, `DATAFORSEO_LIVE_ENABLED=true`, `DATAFORSEO_LIVE_APPROVAL=approved-after-safety-review` ve credential alanlarının hepsi gereklidir; bunlar ayrıca kullanıcı onayı alınmadan ayarlanmaz.
+
+Onaydan önce tüm fake testler geçmeli; güncel sağlayıcı tarifesi ve paneldeki sert maliyet limitleri doğrulanmalı; ayrı test workspace’i ve küçük bir sorgu limiti belirlenmelidir. Onay sonrasında tek bir domain için düşük satır limitli tek Overview isteğiyle başlanır. Gönderilen parametreler, task ID, gerçek fatura maliyeti, alınma zamanı ve receipt karşılaştırılır. Aynı sorgu cache’den tekrarlanarak ek ücret oluşmadığı kontrol edilir. Daha sonra diğer endpoint’ler ayrı bütçe ve onay kapsamı içinde denenir. Herhangi bir belirsiz maliyette test durur; anahtarlar log’a, fixture’a veya rapora yazılmaz. VPS veya production kullanımı bu planın parçası değildir.
+
+Mimari ve resmî endpoint kaynakları: [Sprint 2 mimarisi](deploy/SPRINT2_ARCHITECTURE.md). Sonuç ve dosya listesi: [Sprint 2 raporu](deploy/SPRINT2_REPORT.md). Test kapsamı: `app/tests/Feature/SeoEngineTest.php`. GitHub Actions branch filtresi Sprint 2’yi kapsar; workflow’un GitHub’da çalışması commit/push onayından sonradır.
+
 ## Sprint 1 — çalışan yerel MVP
 
 Laravel 13, PHP 8.5-FPM, Nginx, PostgreSQL 16, Redis 7, Blade, Livewire 4 ve Tailwind CSS 4 kullanılır. Yerel adres: **http://localhost:8088**. Compose proje adı `rankviora`.
