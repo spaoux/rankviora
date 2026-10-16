@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ApiUsageLog extends Model
 {
-    protected $fillable = ['user_id', 'provider', 'operation', 'units', 'cost', 'is_demo'];
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {
-        return ['is_demo' => 'boolean', 'cost' => 'decimal:6'];
+        return ['is_demo' => 'boolean', 'cost' => 'decimal:6', 'response_payload' => 'array', 'expires_at' => 'datetime'];
     }
 
     public function workspace(): BelongsTo

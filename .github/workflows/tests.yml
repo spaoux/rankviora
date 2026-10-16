@@ -1,7 +1,7 @@
 name: Foundation checks
 on:
   push:
-    branches: [feature/mvp-foundation]
+    branches: [feature/mvp-foundation, feature/seo-data-engine]
   pull_request:
 permissions:
   contents: read

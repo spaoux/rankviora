@@ -7,10 +7,10 @@ services:
     restart: unless-stopped
     volumes:
       - ./app:/var/www/html
-    environment:
+    environment: &app-environment
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://localhost:8088
+      APP_URL: ${APP_URL:-http://localhost:8088}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -36,7 +36,7 @@ services:
     image: nginx:1.28-alpine
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8088:80"
+      - "127.0.0.1:${RANKVIORA_PORT:-8088}:80"
     volumes:
       - ./app:/var/www/html:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -47,6 +47,26 @@ services:
         condition: service_completed_successfully
     healthcheck:
       test: [CMD-SHELL, "wget -q -O /dev/null http://127.0.0.1/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    user: www-data
+    working_dir: /var/www/html
+    entrypoint: [php, artisan, queue:work, redis, --queue=seo, --sleep=2, --tries=5, --timeout=600, --max-time=3600]
+    stop_grace_period: 610s
+    volumes:
+      - ./app:/var/www/html
+    environment: *app-environment
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, "php -r 'exit(str_contains(file_get_contents(\"/proc/1/cmdline\"),\"queue:work\")?0:1);'"]
       interval: 15s
       timeout: 5s
       retries: 5
