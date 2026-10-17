@@ -20,6 +20,9 @@ final class SnapshotDispatcher
             throw new SeoException('invalid_request');
         }
         $mode = config('seo.mode');
+        if ($mode === 'sandbox') {
+            throw new SeoException('sandbox_cli_only');
+        }
         if ($mode !== 'mock' && ($mode !== 'live' || ! config('seo.live_enabled') || config('seo.live_approval') !== 'approved-after-safety-review')) {
             throw new SeoException('live_not_approved');
         }

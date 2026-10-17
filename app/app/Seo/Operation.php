@@ -9,8 +9,14 @@ enum Operation: string
     case Intersection = 'domain_intersection';
     case Pages = 'relevant_pages';
 
-    public function url(): string
+    public function url(string $mode = 'live'): string
     {
-        return 'https://api.dataforseo.com/v3/dataforseo_labs/google/'.$this->value.'/live';
+        $host = match ($mode) {
+            'sandbox' => 'sandbox.dataforseo.com',
+            'live', 'mock' => 'api.dataforseo.com',
+            default => throw new SeoException('provider_disabled', false, 0),
+        };
+
+        return 'https://'.$host.'/v3/dataforseo_labs/google/'.$this->value.'/live';
     }
 }

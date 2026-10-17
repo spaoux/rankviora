@@ -81,7 +81,7 @@ class SeoController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Anahtar kelime', 'Google pozisyonu', 'Arama hacmi', 'CPC (USD)', 'Tahmini trafik (ETV)', 'Sıralanan URL', 'Rakip pozisyonu', 'Kaynak', 'Snapshot'], ',', '"', '');
             foreach ($rows->cursor() as $row) {
-                fputcsv($out, array_map([CsvCell::class, 'safe'], [$row->keyword, $row->own_position, $row->search_volume, $row->cpc, $row->own_traffic, $row->own_url ?? $row->rival_url, $row->rival_position, $snapshot->is_demo ? 'MOCK / DEMO' : 'DataForSEO', $snapshot->id]), ',', '"', '');
+                fputcsv($out, array_map([CsvCell::class, 'safe'], [$row->keyword, $row->own_position, $row->search_volume, $row->cpc, $row->own_traffic, $row->own_url ?? $row->rival_url, $row->rival_position, $snapshot->sourceLabel(), $snapshot->id]), ',', '"', '');
             }
             fclose($out);
         }, 'rankviora-'.$snapshot->id.'-'.$snapshot->mode.'.csv', ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);

@@ -22,6 +22,9 @@ final class BudgetLedger
             if (! in_array($log->status, ['pending', 'uncertain'], true)) {
                 throw new SeoException('already_settled');
             }
+            if ($log->mode === 'sandbox') {
+                throw new SeoException('sandbox_has_no_paid_budget');
+            }
             $budget = SeoBudget::findOrFail($log->seo_budget_id);
             $budget->held_micros -= $log->reserved_micros;
             $budget->spent_micros += $cost;
@@ -35,6 +38,17 @@ final class BudgetLedger
     {
         return DB::transaction(function () use ($snapshot, $operation, $hash) {
             $workspace = Workspace::lockForUpdate()->findOrFail($snapshot->project->workspace_id);
+            if ($snapshot->mode === 'sandbox') {
+                if ($workspace->apiUsageLogs()->where('mode', 'sandbox')->where('request_hash', $hash)->where('status', 'pending')->exists()) {
+                    throw new SeoException('query_in_progress');
+                }
+
+                return $workspace->apiUsageLogs()->create([
+                    'project_id' => $snapshot->project_id, 'seo_snapshot_id' => $snapshot->id, 'user_id' => $snapshot->requested_by,
+                    'provider' => 'dataforseo', 'operation' => $operation, 'mode' => 'sandbox', 'request_hash' => $hash,
+                    'status' => 'pending', 'is_demo' => true, 'cost' => 0, 'units' => 1, 'reserved_micros' => 0,
+                ]);
+            }
             $budget = SeoBudget::firstOrCreate(['workspace_id' => $workspace->id, 'mode' => $snapshot->mode, 'month' => now('UTC')->format('Y-m')], ['limit_micros' => config('seo.monthly_budget_micros')]);
             if ($budget->blocked || $workspace->apiUsageLogs()->where('mode', $snapshot->mode)->whereIn('status', ['pending', 'uncertain'])->exists()) {
                 throw new SeoException('budget_review_required');
@@ -60,6 +74,13 @@ final class BudgetLedger
             $log = ApiUsageLog::lockForUpdate()->findOrFail($log->id);
             if ($log->status !== 'pending') {
                 throw new SeoException('already_settled');
+            }
+            if ($log->mode === 'sandbox') {
+                $log->update(['status' => $status === 'completed' ? 'completed' : 'failed', 'reported_cost_micros' => $cost, 'cost' => '0.000000',
+                    'provider_status' => $providerStatus, 'task_id' => $taskId, 'error_code' => $error, 'response_payload' => $payload,
+                    'expires_at' => $payload === null ? null : now()->addSeconds(config('seo.cache_seconds'))]);
+
+                return;
             }
             $budget = SeoBudget::findOrFail($log->seo_budget_id);
             if ($cost === null) {

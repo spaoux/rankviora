@@ -10,7 +10,7 @@ abstract class TestCase extends BaseTestCase
     public function createApplication(): Application
     {
         // Container environment must never redirect RefreshDatabase to the local app database.
-        $settings = ['APP_ENV' => 'testing', 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => ':memory:', 'DB_URL' => '', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array', 'QUEUE_CONNECTION' => 'sync', 'BCRYPT_ROUNDS' => '4'];
+        $settings = ['DATAFORSEO_MODE' => 'mock', 'DATAFORSEO_LOGIN' => '', 'DATAFORSEO_PASSWORD' => '', 'DATAFORSEO_SANDBOX_ENABLED' => 'false', 'DATAFORSEO_LIVE_ENABLED' => 'false', 'DATAFORSEO_LIVE_APPROVAL' => '', 'APP_ENV' => 'testing', 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => ':memory:', 'DB_URL' => '', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array', 'QUEUE_CONNECTION' => 'sync', 'BCRYPT_ROUNDS' => '4'];
         foreach ($settings as $key => $value) {
             putenv($key.'='.$value);
             $_ENV[$key] = $value;

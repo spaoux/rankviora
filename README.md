@@ -1,6 +1,10 @@
 # rankviora
 RankViora — SEO &amp; GEO Intelligence SaaS Platform
 
+## DataForSEO Sandbox
+
+Ayrı `sandbox` modu ve yalnızca Domain Rank Overview için güvenli terminal kontrolü hazırdır. MOCK/LIVE davranışları korunur; Sandbox sonuçları test verisi olarak etiketlenir, gerçek bütçe tüketmez. Varsayılan hâlâ MOCK’tur. Yerel environment ayarları ve dry-run/tek istek akışı: [Sandbox kurulumu](deploy/DATAFORSEO_SANDBOX.md). Gerçek kimlik bilgilerini yalnızca Git’e girmeyen `app/.env` dosyasında kendiniz tanımlayın.
+
 ## Sprint 2 — SEO Data Engine
 
 Aktif geliştirme branch’i `feature/seo-data-engine`. Sprint 1 giriş, workspace, proje/rakip ve GEO işlevleri korunur. **SEO Veri Motoru** menüsünden proje seçin; rakip seçerek **MOCK analizi başlat** düğmesini kullanın. Redis `seo` kuyruğundaki worker snapshot hazırlar. Sayfayı yenileyerek Domain Overview, Organic Keywords, Keyword Gap ve snapshot geçmişini açın. API kullanımında maliyet ve rezervasyon durumları görünür.

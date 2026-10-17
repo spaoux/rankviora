@@ -25,7 +25,7 @@ final class SeoGateway
         if ($snapshot->mode !== config('seo.mode')) {
             throw new SeoException('mode_changed');
         }
-        if ($snapshot->is_demo !== ($snapshot->mode === 'mock')) {
+        if ($snapshot->is_demo !== in_array($snapshot->mode, ['mock', 'sandbox'], true)) {
             throw new SeoException('invalid_data_provenance');
         }
         if (($request->operation === Operation::Intersection && ($request->target !== $snapshot->competitor_domain || $request->other !== $snapshot->domain))
@@ -72,7 +72,7 @@ final class SeoGateway
                     $response = $this->provider->fetch($request);
                 } catch (SeoException $error) {
                     $this->ledger->settle($log, $error->costMicros, 'failed', $error->providerStatus, $error->taskId, $error->reason);
-                    if ($error->retryable && $error->costMicros === 0 && $attempt < config('seo.safe_retries')) {
+                    if ($snapshot->mode !== 'sandbox' && $error->retryable && $error->costMicros === 0 && $attempt < config('seo.safe_retries')) {
                         if (! app()->runningUnitTests()) {
                             usleep(250000 * (2 ** $attempt));
                         }

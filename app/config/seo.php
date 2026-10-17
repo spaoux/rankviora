@@ -2,6 +2,7 @@
 
 return [
     'mode' => env('DATAFORSEO_MODE', 'mock'),
+    'sandbox_enabled' => (bool) env('DATAFORSEO_SANDBOX_ENABLED', false),
     'live_enabled' => (bool) env('DATAFORSEO_LIVE_ENABLED', false),
     'live_approval' => env('DATAFORSEO_LIVE_APPROVAL', ''),
     'login' => env('DATAFORSEO_LOGIN', ''),
