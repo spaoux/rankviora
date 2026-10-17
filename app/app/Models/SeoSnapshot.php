@@ -9,6 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SeoSnapshot extends Model
 {
+    public function sourceLabel(): string
+    {
+        return self::labelForMode($this->mode);
+    }
+
+    public static function labelForMode(string $mode): string
+    {
+        return match ($mode) {
+            'mock' => 'MOCK / DEMO',
+            'sandbox' => 'SANDBOX / TEST VERİSİ',
+            'live' => 'DataForSEO',
+            default => 'DOĞRULANMAMIŞ KAYNAK',
+        };
+    }
+
     protected $guarded = ['id'];
 
     protected function casts(): array

@@ -31,6 +31,9 @@ final class SnapshotRunner
         }
         try {
             $snapshot->load('project.workspace');
+            if ($snapshot->mode === 'sandbox') {
+                throw new SeoException('sandbox_cli_only');
+            }
             $actor = User::find($snapshot->requested_by);
             if (! $actor || ! Gate::forUser($actor)->allows('update', $snapshot->project->workspace)) {
                 throw new SeoException('access_revoked');

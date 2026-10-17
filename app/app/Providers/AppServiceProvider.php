@@ -28,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
                     $stubs[$operation->url()] = fn ($request) => Factory::response(MockResponses::forRequest($request));
                 }
                 $http->fake($stubs);
+            } elseif (config('seo.mode') === 'sandbox') {
+                // No global HTTP event listeners, request recording, or telemetry for credentialled sandbox calls.
+                $http = new Factory;
             } else {
                 $http = Http::getFacadeRoot();
             }
